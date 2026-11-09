@@ -1,38 +1,8 @@
 # Mido Blog API
 
-A Django project that provides a REST API for creating and managing blog posts.
-The project uses SQLite by default.
-
-## Authentication
-
-The project uses Django's built-in `auth.User` model with username-based login.
-The `accounts` app must not define a separate concrete `AbstractUser` subclass
-while `AUTH_USER_MODEL` is set to `auth.User`, as their reverse accessors clash.
-
-Authentication uses [Djoser](https://djoser.readthedocs.io/en/latest/authentication_backends.html)
-with Simple JWT, routed through `accounts.urls`. Legacy `/auth/token/login/` and
-`/auth/token/logout/` endpoints are not enabled.
-
-| Method | URL | JSON body / behavior |
-| --- | --- | --- |
-| `POST` | `/auth/users/` | Register with `username`, `password`, and optional `email`, `first_name`, `last_name` |
-| `POST` | `/auth/jwt/create/` | Send `username`, `password`; returns `access` and `refresh` |
-| `POST` | `/auth/jwt/refresh/` | Send `refresh`; returns a new `access` |
-| `POST` | `/auth/jwt/verify/` | Send `token`; returns `200 {}` if valid |
-| `GET` | `/auth/users/me/` | Retrieve the authenticated account |
-| `PATCH` | `/auth/users/me/` | Update account fields such as `first_name`, `last_name` |
-| `POST` | `/auth/users/set_password/` | Send `current_password`, `new_password`; requires authentication |
-
-For authenticated requests, use `Authorization: Bearer <access_token>`.
-The Bearer header is retained for compatibility with existing clients rather
-than the `JWT` header shown in Djoser's example. JWT login uses `username`, not
-email. Passwords are validated, hashed, and never included in account responses.
-An unauthenticated `GET /auth/users/` returns `401`; use `POST` to register.
-
-There is no JWT logout endpoint in this configuration: clients sign out by
-discarding their tokens, which does not revoke them on the server. Current
-lifetimes are 15 days for access tokens and 1 day for refresh tokens.
-Email activation and frontend password-reset links are not configured.
+A Django REST Framework project that provides a REST API for creating and
+managing blog posts, with JWT authentication. The project uses SQLite by
+default.
 
 ## Requirements
 
@@ -58,7 +28,34 @@ python manage.py runserver
 
 The development server runs at `http://127.0.0.1:8000/`.
 
-## API
+## Authentication
+
+The project uses Django's built-in `auth.User` model with username-based login
+and [Simple JWT](https://django-rest-framework-simplejwt.readthedocs.io/) for
+token authentication. Registration and logout are handled by custom views in
+the `accounts` app; token blacklisting is enabled, so logout revokes the
+refresh token on the server.
+
+| Method | URL | JSON body / behavior |
+| --- | --- | --- |
+| `POST` | `/api/register/` | Register with `username`, `password`, and optional `email`; returns the created user plus `access` and `refresh` tokens |
+| `POST` | `/api/login/` | Send `username`, `password`; returns `access` and `refresh` |
+| `POST` | `/api/refresh/` | Send `refresh`; returns a new `access` |
+| `POST` | `/api/logout/` | Send `refresh`; blacklists the refresh token (requires authentication) |
+
+`/api/token/` and `/api/token/refresh/` are also available as aliases for
+login and refresh.
+
+For authenticated requests, send the access token in the header:
+
+```
+Authorization: Bearer <access-token>
+```
+
+Passwords are write-only and never included in responses. Current token
+lifetimes are 15 days for access tokens and 1 day for refresh tokens.
+
+## Posts API
 
 The posts endpoints are available under `/api/`:
 
