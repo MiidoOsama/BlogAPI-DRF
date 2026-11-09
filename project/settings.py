@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,9 +39,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'djoser',
     'corsheaders',
     'accounts',
     'posts',
+
 ]
 
 MIDDLEWARE = [
@@ -84,6 +89,11 @@ DATABASES = {
     }
 }
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -142,4 +152,19 @@ CORS_ALLOWED_ORIGINS = [
 # For development only - allows all origins
 CORS_ALLOW_ALL_ORIGINS = True
 
-AUTH_USER_MODEL = "accounts.CustomUser"
+AUTH_USER_MODEL = "auth.User"
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME':timedelta(days=15),
+    'REFRESH_TOKEN_LIFETIME':timedelta(days=1),
+    'BLACKLIST_AFTER_ROTATION':True,
+    'AUTH_HEADER_TYPES':('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
+
+DJOSER = {
+    'SERIALIZER':{
+        'user_create':'accounts.serializers.myUserCreateSerializer',
+    }
+}
